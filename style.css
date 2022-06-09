@@ -1,0 +1,26 @@
+.column {
+  float: left;
+  width: 50%;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+  visibility: visible;
+}
+
+.bURL{
+    float: right;
+    width: 20%;
+    visibility: visible;
+}
+
+.result{
+    display: none;
+}
+
+.code{
+    display: block;
+}

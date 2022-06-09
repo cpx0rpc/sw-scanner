@@ -1,0 +1,102 @@
+<head>
+    <title> Iroh </title>
+    <link rel="stylesheet" href="style.css">
+    <script src="iroh-browser.js"></script>
+</head>
+<body>
+    <h1> Dynamic Analysis on Service Worker </h1> <br>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+					var mode = window.location.href.match(/\?mode=.*?&filename=/).toString();
+					mode = mode.substring(6, mode.length-10);
+					var filename = window.location.href.match(/&filename=.*?&domain=/).toString();
+					filename = filename.substring(10, filename.length-8) || "example";
+          var domain = window.location.href.match(/&domain=.*?&swurl=/).toString();
+          domain = domain.substring(8, domain.length-7) || "www.swtaint.com";
+          var swurl = window.location.href.match(/&swurl=.*?&params=/).toString();
+          swurl = swurl.substring(7, swurl.length-8) || "www.swtaint.com/sw.js"; 
+          var params = window.location.href.match(/&params=.*/).toString();
+          params = params.substring(8) || "params=none";
+          
+					console.log("Filename: ", filename);
+          console.log("Domain: ", domain);
+          console.log("SW: ", swurl);
+          console.log("Parameters: ", params);
+          
+          navigator.serviceWorker.register('sw.js?'+params, {scope: '/swscanner/'})
+          .then(function(reg) {
+            // registration worked
+            console.log('Registration succeeded. Scope is ' + reg.scope);
+
+						fetch("included_files/"+filename.replace("#", "%23")+"/sw.js").then(function(response) {
+							if(!response.ok)
+							{
+								console.warn("Cannot fetch SW code");
+								console.log(response);
+							}
+							else
+							{
+								response.text().then(function(text) {
+									navigator.serviceWorker.controller.postMessage({command: "inforesp", scope: domain, swCode: text, filename: filename, mode: mode, takenPath: localStorage.getItem("path")});
+								});
+							}
+						});
+            
+          }).catch(function(error) {
+            // registration failed
+            console.log('Registration failed with ' + error);
+          });
+          
+          navigator.serviceWorker.addEventListener('message', function(event) {
+							console.log("Receive postMessage", event.data);
+ 
+							if(event.data.command == "savepath")
+							{
+								localStorage.setItem('path', event.data.data);
+							}
+          });
+          
+
+          
+        }
+    </script>
+    
+    <div class="row"> 
+        <div class="column">
+            <textarea id="analysis_code" rows="50" cols="100"> Insert Analysis Code Here. </textarea>
+        </div>
+        <div class="column">
+            <div class="row">
+                <div class="code" id="mc"> 
+                    <textarea id="sw_code" rows="24" cols="100"> Insert SW Code Here. </textarea> <br>
+                </div>
+            </div>
+            <div class="row">
+                <div class="code" id="sw">
+                    <textarea id="main_code" rows="24" cols="100"> Insert Main Frame Code Here. </textarea> <br>
+                </div>
+            </div>
+            <div class="row">
+                <textarea id="sw_params" rows="1" cols="100"> Insert SW Params here. </textarea>
+            </div>
+            <div class="row">
+                <div class="result" id="rs"> Result 
+                    <textarea id="rs_area" rows="50" cols="100"> </textarea> <br>
+                    <a href="result.txt" download> Export Result </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="column"> 
+            <div class="bURL"> <a href="https://beautifier.io/"> Beautify </a> <br> </div>
+        </div>
+    </div>
+    
+    
+    
+    <input type="button" id="analyze" value="Analyze"> <input type="button" id="save" value="Save"> <input type="button" id="toggle" value="Toggle"> <input type="button" id="register" value="Register SW">
+    
+    <script src="button_handler.js"></script>
+</body>
